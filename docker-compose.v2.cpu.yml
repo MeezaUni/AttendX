@@ -1,0 +1,8 @@
+services:
+  central:
+    build:
+      args:
+        TORCH_VARIANT: cpu
+    environment:
+      ATTENDX_DEVICE: cpu
+    deploy: !reset {}

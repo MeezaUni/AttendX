@@ -1,0 +1,19 @@
+# Keep biometric data, databases, keys and model weights OUT of the image.
+data/
+models/
+**/*.db
+**/*.key
+.env
+**/.venv/
+**/node_modules/
+frontend/dist/
+frontend/public/mediapipe/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+.git/
+.remember/
+.playwright-mcp/
+docs/
+backend/tests/
+*.log

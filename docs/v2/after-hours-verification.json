@@ -1,0 +1,77 @@
+{
+  "verified_at": "2026-11-04T19:03:59.424781+05:30",
+  "source_commit": "069cbdd3be1e2205ccbcdfed96c61b0b4fc598b2",
+  "observed_failure": {
+    "recording": "Operator recording at 18:52 on 2026-11-04",
+    "closing_time": "18:00",
+    "timezone": "Asia/Kolkata",
+    "cause": "Successful login followed by timer closing-time lock, with hidden override and overwritten explanation"
+  },
+  "backend": {
+    "passed": 199,
+    "skipped": 1,
+    "warning_count": 1,
+    "elapsed_seconds": 83.72,
+    "skip": "Consented real-face corpus unavailable",
+    "warning": "Upstream Starlette/httpx deprecation",
+    "ruff": "passed"
+  },
+  "desktop_tests": {
+    "passed": 35,
+    "new_regression_cases": 7,
+    "red_failures_observed_before_fix": 6,
+    "cached_unlock_acceptance_survives_timer": true,
+    "cancel_preserves_credentials": true,
+    "online_cancel_starts_no_network_request": true,
+    "closing_notice_survives_sync_message": true,
+    "daily_override_expiry_preserved": true,
+    "shared_institution_clock_boundaries": true
+  },
+  "native_preview": {
+    "data": "Isolated synthetic profile only",
+    "at": "18:52 Asia/Kolkata",
+    "sign_in_notice": "visually checked",
+    "actual_modal_yes_button": "clicked by isolated Qt test harness",
+    "remained_unlocked_after_tick": true,
+    "no_operator_login_performed": true
+  },
+  "windows": {
+    "exe_path": "dist\\faculty\\AttendXFaculty\\AttendXFaculty.exe",
+    "exe_bytes": 48697890,
+    "exe_sha256": "f9feceff98b46c76640ce74bc64f6334864f34a588e17d1103c2b4636ea084da",
+    "checks": {
+      "--smoke-test": {
+        "window_title": "AttendX Faculty V2",
+        "tabs": 3,
+        "locked": true,
+        "student_listener_started": false,
+        "model_files_external": true,
+        "qt_version": "6.12.0"
+      },
+      "--check-models": {
+        "engine": {
+          "engine": "real",
+          "model_id": "adaface_ir101_webface4m",
+          "detector_loaded": true,
+          "embedder_loaded": true,
+          "landmarker_loaded": true,
+          "device": "cuda",
+          "error": null
+        },
+        "blank_frame_faces": 0
+      }
+    },
+    "shortcut": "AttendX Faculty.lnk"
+  },
+  "preservation": {
+    "operator_saved_sessions": 2,
+    "operator_profile_reset": false,
+    "central_api_changed": false,
+    "central_deployment_changed": false,
+    "timetable_windows_still_enforced": true
+  },
+  "limits": [
+    "The operator must choose authorized after-hours use and enter their own PIN",
+    "No new physical-phone or face-accuracy result is claimed"
+  ]
+}

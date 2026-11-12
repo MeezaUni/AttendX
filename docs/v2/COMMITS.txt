@@ -1,0 +1,19 @@
+Local AttendX V2 commits; original main: 6f67b26
+
+7d9fd0d docs(v2): preserve definitive requirements and record V1 baseline
+5f6a1f3 feat(v2): add email activation and scoped three-sample enrollment approval
+513f83c feat(faculty): persist offline rosters approvals and replay-safe synchronization
+e05fecd feat(portal): implement V2 activation enrollment coordinator and classroom screens
+5e8078b feat(windows): package faculty app and harden V2 privacy synchronization
+25412dd docs(v2): deliver verified artifacts operations and complete feature handover
+afea837 deploy(v2): publish authorized central portal through HTTPS Funnel
+9b5d5f5 feat(attendance): use faculty-started five-minute sessions with class-end grace
+d2ae2fb feat(faculty): guide offline classroom start and share phone trust across laptops
+db0694e docs(faculty): record guided-start verification and simple test instructions
+4d0971b feat(faculty): streamline match review and stabilize attendance controls
+be86464 docs(v2): record verified review camera and packaged app updates
+069cbdd fix(faculty): explain after-hours locks before sign-in
+
+The final documentation commit contains this inventory; resolve it with:
+git log -1 --format="%h %s" -- docs/v2/COMMITS.txt
+These development commits predate the public source snapshot on GitHub main.

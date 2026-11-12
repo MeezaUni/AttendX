@@ -1,0 +1,47 @@
+# --- never commit biometric data, models, databases or secrets ---
+models/
+data/
+*.db
+*.db-wal
+*.db-shm
+*.key
+.env
+.env.v2
+*.onnx
+*.safetensors
+*.task
+*.ckpt
+*.pt
+*.pth
+*.zip
+faces/
+**/test_faces/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/public/mediapipe/
+
+# Tools / OS
+.remember/
+.playwright-mcp/
+.vscode/
+.idea/
+*.log
+Thumbs.db
+.DS_Store
+backups/
+build/
+dist/
+*.spec
+*.pem
+.superpowers/

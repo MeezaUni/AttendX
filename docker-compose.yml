@@ -1,0 +1,37 @@
+# Dedicated Compose project for AttendX. Publishes ONLY on 127.0.0.1:8470; phones reach it
+# through Tailscale Serve (HTTPS, tailnet-only). See docs/deployment.md.
+name: attendx
+
+services:
+  attendx:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        TORCH_VARIANT: ${ATTENDX_TORCH_VARIANT:-cu128}
+    image: attendx:local
+    container_name: attendx
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ATTENDX_PORT:-8470}:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ATTENDX_DATA_DIR: /data
+      ATTENDX_MODELS_DIR: /models
+      ATTENDX_COOKIE_SECURE: "true"
+    volumes:
+      - attendx-data:/data
+      - ./models:/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  attendx-data:
+    name: attendx-data

@@ -1,0 +1,7 @@
+day,period,start,end,course_code,course_name,section,faculty,room
+Monday,1,08:50,09:45,DL3101,Deep Learning,CSE-5A,Dr. Example One,LH-101
+Monday,2,09:45,10:40,CV3102,Computer Vision,CSE-5A,Dr. Example Two,LH-101
+Monday,3,10:55,11:50,DB3103,Database Systems,CSE-5A,,LH-102
+Monday,4,,,LUNCH,,CSE-5A,,
+Tuesday,1,08:50,09:45,CV3102,Computer Vision,CSE-5A,Dr. Example Two,LH-101
+Tuesday,2,09:45,10:40,DL3101,Deep Learning,CSE-5A,Dr. Example One,LH-101

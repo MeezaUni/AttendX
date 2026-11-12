@@ -1,0 +1,12 @@
+// Copies the MediaPipe WASM runtime into public/ so the app serves it from its own origin
+// (no third-party CDN; works offline inside the tailnet).
+import { cpSync, mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const src = join(root, "node_modules", "@mediapipe", "tasks-vision", "wasm");
+const dst = join(root, "public", "mediapipe", "wasm");
+mkdirSync(dst, { recursive: true });
+cpSync(src, dst, { recursive: true });
+console.log("copied MediaPipe wasm ->", dst);

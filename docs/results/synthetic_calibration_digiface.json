@@ -1,0 +1,118 @@
+{
+  "identities": 8,
+  "genuine_scores": 34,
+  "impostor_scores": 238,
+  "skipped_images": {
+    "identity_0": 1,
+    "identity_1": 3,
+    "identity_2": 3,
+    "identity_3": 4,
+    "identity_4": 3,
+    "identity_5": 6,
+    "identity_6": 1,
+    "identity_7": 1,
+    "identity_8": 3
+  },
+  "genuine_percentiles": {
+    "1": 0.5708,
+    "5": 0.6319,
+    "10": 0.6602,
+    "50": 0.7502
+  },
+  "impostor_percentiles": {
+    "50": 0.0794,
+    "90": 0.2185,
+    "95": 0.2585,
+    "99": 0.3429
+  },
+  "impostor_max": 0.3885,
+  "single_score_rates": [
+    {
+      "threshold": 0.1,
+      "FMR": 0.41597,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.15,
+      "FMR": 0.2437,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.2,
+      "FMR": 0.13445,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.25,
+      "FMR": 0.06723,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.3,
+      "FMR": 0.02101,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.35,
+      "FMR": 0.01261,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.4,
+      "FMR": 0.0,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.45,
+      "FMR": 0.0,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.5,
+      "FMR": 0.0,
+      "FNMR": 0.0
+    },
+    {
+      "threshold": 0.55,
+      "FMR": 0.0,
+      "FNMR": 0.02941
+    },
+    {
+      "threshold": 0.6,
+      "FMR": 0.0,
+      "FNMR": 0.02941
+    },
+    {
+      "threshold": 0.65,
+      "FMR": 0.0,
+      "FNMR": 0.08824
+    },
+    {
+      "threshold": 0.7,
+      "FMR": 0.0,
+      "FNMR": 0.17647
+    }
+  ],
+  "three_frame_rule": {
+    "match_threshold": 0.4,
+    "nonmatch_threshold": 0.25,
+    "genuine": {
+      "match": 73,
+      "non_match": 0,
+      "abstain": 0
+    },
+    "impostor": {
+      "match": 0,
+      "non_match": 485,
+      "abstain": 26
+    }
+  },
+  "note": "Measured on the supplied folder only. Small samples give wide uncertainty; report the counts with any rate you quote.",
+  "provenance": {
+    "data": "10 synthetic DigiFace-1M identities (subjects 2000-2009, first 10 images each), padded to 480x520 frames; images not redistributed",
+    "pipeline": "AttendX real engine: SCRFD det_10g + AdaFace IR-101 (WebFace4M), CUDA",
+    "command": "scripts/calibrate_thresholds.py <folder> --enroll-k 3",
+    "date": "2026-11-03",
+    "caveat": "Synthetic faces, tiny sample: demonstrates the procedure only. NOT an accuracy estimate for students or phone cameras."
+  }
+}

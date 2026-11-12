@@ -1,0 +1,129 @@
+{
+  "verified_at": "2026-11-04T18:32:41.150677+05:30",
+  "source_commit": "4d0971b08651ac25ce7367ae1a487b985d0a33c4",
+  "backend": {
+    "passed": 192,
+    "skipped": 1,
+    "warning_count": 1,
+    "elapsed_seconds": 72.14,
+    "skip": "Consented real-face fixture not provided",
+    "warning": "Upstream Starlette/httpx deprecation",
+    "ruff": "passed"
+  },
+  "frontend": {
+    "tests_passed": 5,
+    "typescript_and_production_build": "passed",
+    "deployed_login_viewport": [
+      390,
+      844
+    ],
+    "horizontal_overflow": false,
+    "light_background": "rgb(247, 248, 251)",
+    "dark_background": "rgb(12, 20, 34)"
+  },
+  "native_regressions": {
+    "open_decision_popup_survives_refresh": true,
+    "manual_overrides_preserved": true,
+    "legacy_untouched_pending_rows_receive_draft_presence": true,
+    "approved_sessions_unchanged": true,
+    "draft_match_suggestion_emits_no_final_event": true,
+    "headcount_recount_persists": true,
+    "light_dark_checkbox_outline_pixel_check": "passed",
+    "both_themes_visually_inspected": true
+  },
+  "browser_synthetic_checks": {
+    "origin": "http://127.0.0.1:8481",
+    "camera": "Canvas MediaStream fixture, not a real face",
+    "api": "Intercepted synthetic classroom responses",
+    "right_arrow_on_right": true,
+    "blink_animation": "two-blinks",
+    "reduced_motion_animation": "none",
+    "zoom_4x_preview_and_decoder_crop": true,
+    "actual_zxing_decoded_fresh_qr_at_4x": true,
+    "front_and_rear_tracks_ended_after_submission": true,
+    "same_tab_fresh_qr_restarts_attempt": true,
+    "routes_removed_and_fixture_process_stopped": true
+  },
+  "windows": {
+    "exe_path": "dist\\faculty\\AttendXFaculty\\AttendXFaculty.exe",
+    "exe_bytes": 48696459,
+    "exe_sha256": "a7cee284482a5c6fad544ef2bcbd684eeda1734c3afa4c6c5f8f70a4e843f64f",
+    "native_start": {
+      "window_title": "AttendX Faculty V2",
+      "tabs": 3,
+      "locked": true,
+      "student_listener_started": false,
+      "model_files_external": true,
+      "qt_version": "6.12.0"
+    },
+    "real_models": {
+      "engine": {
+        "engine": "real",
+        "model_id": "adaface_ir101_webface4m",
+        "detector_loaded": true,
+        "embedder_loaded": true,
+        "landmarker_loaded": true,
+        "device": "cuda",
+        "error": null
+      },
+      "blank_frame_faces": 0
+    },
+    "desktop_shortcut": "AttendX Faculty.lnk",
+    "full_directory_and_external_models_required": true
+  },
+  "offline_https_restart_and_idempotency": {
+    "provision": {
+      "roster_count": 3,
+      "central_https_verified": true
+    },
+    "offline": {
+      "approved_offline": true,
+      "pending_after_connection_refused": 1
+    },
+    "restart": {
+      "approved_after_separate_process_restart": true,
+      "pending": 1
+    },
+    "sync": {
+      "central_approved_meetings": 1,
+      "central_roster_marks": 3,
+      "duplicate_retries": 2,
+      "remaining_outbox": 0
+    },
+    "synthetic_faces_used": false
+  },
+  "central": {
+    "image": "attendx-v2:local",
+    "container": "attendx-v2-central",
+    "health": "ok",
+    "schema": "0004",
+    "models_device": "cuda",
+    "counts_before": {
+      "users": 4,
+      "students": 1,
+      "v2_enrollment_batches": 1,
+      "v2_enrollment_samples": 3,
+      "v2_approved_sessions": 0
+    },
+    "counts_after": {
+      "users": 4,
+      "students": 1,
+      "v2_enrollment_batches": 1,
+      "v2_enrollment_samples": 3,
+      "v2_approved_sessions": 0
+    },
+    "https_url": "https://YOUR-LAPTOP.YOUR-TAILNET.ts.net:10000",
+    "health_scope": "TLS-verified hostname from this laptop; no new external public-ingress probe claimed",
+    "tailscale_routes_unchanged": true,
+    "v1_and_unrelated_containers_preserved": true
+  },
+  "review": {
+    "finding": "Approved rows still said awaiting approval",
+    "resolution": "Fixed approved label with regression test"
+  },
+  "limits": [
+    "User reported a successful real-phone submission before these changes",
+    "New overlay, QR zoom and camera switching still need physical iOS/Android checks",
+    "These checks do not establish biometric false-match rates or resistance to sophisticated replay"
+  ]
+}

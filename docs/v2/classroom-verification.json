@@ -1,0 +1,116 @@
+{
+  "verified_at": "2026-11-04T17:26:59.086473+05:30",
+  "source_commit": "d2ae2fbd3283b04ea0dc99deb5b45576a897375c",
+  "backend": {
+    "passed": 183,
+    "skipped": 1,
+    "warning_count": 1,
+    "elapsed_seconds": 78.31,
+    "skip": "Consented real-face fixture not provided",
+    "warning": "upstream Starlette/httpx deprecation"
+  },
+  "frontend": {
+    "camera_tests_passed": 2,
+    "typescript_and_vite_build": "passed",
+    "student_mobile_viewport": [
+      390,
+      844
+    ],
+    "student_horizontal_overflow": false,
+    "timetable_fixed_window_controls_removed": true
+  },
+  "windows": {
+    "exe_path": "dist\\faculty\\AttendXFaculty\\AttendXFaculty.exe",
+    "exe_bytes": 48682507,
+    "exe_sha256": "58a0b8b2cbdd61d419c02c05c1cd7b0f02ee83d57e6bebcaa3fb37f74990ccf7",
+    "native_start": {
+      "window_title": "AttendX Faculty V2",
+      "tabs": 3,
+      "locked": true,
+      "student_listener_started": false,
+      "model_files_external": true,
+      "qt_version": "6.12.0"
+    },
+    "real_model_check": {
+      "engine": {
+        "engine": "real",
+        "model_id": "adaface_ir101_webface4m",
+        "detector_loaded": true,
+        "embedder_loaded": true,
+        "landmarker_loaded": true,
+        "device": "cuda",
+        "error": null
+      },
+      "blank_frame_faces": 0
+    },
+    "shortcut": "AttendX Faculty.lnk",
+    "requires_full_directory_and_external_models": true
+  },
+  "hotspot_hardware": {
+    "before": "OFF",
+    "started": "ON",
+    "address": "192.168.137.1",
+    "subnet": "192.168.137.0/24",
+    "after": "OFF",
+    "ownership_cleared": true
+  },
+  "offline_https_restart_and_idempotency": {
+    "provision": {
+      "roster_count": 3,
+      "central_https_verified": true
+    },
+    "offline": {
+      "approved_offline": true,
+      "pending_after_connection_refused": 1
+    },
+    "restart": {
+      "approved_after_separate_process_restart": true,
+      "pending": 1
+    },
+    "sync": {
+      "central_approved_meetings": 1,
+      "central_roster_marks": 3,
+      "duplicate_retries": 2,
+      "remaining_outbox": 0
+    },
+    "synthetic_faces_used": false
+  },
+  "central": {
+    "schema": "0004",
+    "health": "ok",
+    "common_profile_matches_ca": true,
+    "ca_der_sha256": "2cf2276a36012378cff42ff6ca0ac46713006068270022fb125c2acbc0bc1ff8",
+    "counts_before": {
+      "users": 4,
+      "students": 1,
+      "v2_enrollment_batches": 1,
+      "v2_enrollment_samples": 3,
+      "v2_approved_sessions": 0
+    },
+    "counts_after": {
+      "users": 4,
+      "students": 1,
+      "v2_enrollment_batches": 1,
+      "v2_enrollment_samples": 3,
+      "v2_approved_sessions": 0
+    },
+    "pre_migration_backup": "/data/pre-classroom-ca-20261104.db (inside V2 volume)",
+    "https_check": "verified via configured hostname; local resolver uses tailnet route",
+    "fresh_direct_public_ip_probe": "timed out on both existing 443 and 10000; not counted as a pass"
+  },
+  "security_and_lifecycle": [
+    "Device-authenticated private-IP-only CSR issuance",
+    "Root private key encrypted centrally; laptop private keys generated separately",
+    "Offline reuse of cached shared certificate",
+    "Old per-laptop trust rejected until online migration",
+    "One Start dialog; retry and UI-thread input capture",
+    "QR display fitting and privacy-lock cleanup",
+    "No timer before first-use readiness",
+    "Five-minute automatic cleanup independent of slow central requests",
+    "No biometric/account routes on HTTP certificate setup service"
+  ],
+  "existing_routes_preserved": true,
+  "real_phone_camera_qr_and_accuracy": "not tested",
+  "native_notification_delivery": "not visually verified",
+  "push_performed": false
+}

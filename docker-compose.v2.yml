@@ -1,0 +1,45 @@
+# Isolated V2 deployment. V1's project/image/container/volume/8470 remain untouched.
+name: attendx-v2
+services:
+  central:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        TORCH_VARIANT: ${ATTENDX_TORCH_VARIANT:-cu128}
+    image: attendx-v2:local
+    container_name: attendx-v2-central
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8480:8000"
+    environment:
+      ATTENDX_DATA_DIR: /data
+      ATTENDX_MODELS_DIR: /models
+      ATTENDX_LEGACY_V1_ENABLED: "false"
+      ATTENDX_COOKIE_SECURE: "true"
+      ATTENDX_PORTAL_URL: ${ATTENDX_V2_PORTAL_URL:-https://localhost:8480}
+      ATTENDX_UNIVERSITY_EMAIL_DOMAIN: ${ATTENDX_UNIVERSITY_EMAIL_DOMAIN:-example.edu}
+      ATTENDX_MAIL_TRANSPORT: smtp
+      ATTENDX_SMTP_HOST: mailpit
+      ATTENDX_SMTP_PORT: "1025"
+      ATTENDX_SMTP_STARTTLS: "false" # development catcher on this isolated Docker network
+    volumes:
+      - v2-data:/data
+      - ./models:/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  mailpit:
+    image: axllent/mailpit:v1.27.8
+    container_name: attendx-v2-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8026:8025"
+    # SMTP is available only inside this Compose network; no real emails are delivered.
+volumes:
+  v2-data:
+    name: attendx-v2-data

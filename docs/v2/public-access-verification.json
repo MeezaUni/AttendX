@@ -1,0 +1,62 @@
+{
+  "verified_at": "2026-11-04T16:06:15.884475+05:30",
+  "authorization": "User explicitly authorized public central portal access on 4 November 2026",
+  "public_portal": "https://YOUR-LAPTOP.YOUR-TAILNET.ts.net:10000/",
+  "transport": "certificate-verified HTTPS to public Funnel ingress 103.84.155.217, forced DNS override; does not use private 100.x tailnet destination",
+  "tls_verification_disabled": false,
+  "checks": [
+    {
+      "method": "GET",
+      "path": "/",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/activate",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/reset",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/admin/status",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/enrollment-photos/999999",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/sync/snapshot",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/classroom/api/entry",
+      "status": 405
+    }
+  ],
+  "portal_url_setting": "https://YOUR-LAPTOP.YOUR-TAILNET.ts.net:10000",
+  "new_email_links_use_public_origin": true,
+  "existing_email_links": "Replace only :8444 with :10000, preserving path and entire fragment; token validity/expiry is unchanged",
+  "classroom_intake_public": false,
+  "mailpit_public": false,
+  "source_api_changes": false,
+  "unchanged_existing_routes": [
+    "443 -> 127.0.0.1:8000 (public)",
+    "8443 -> 127.0.0.1:8470 (private V1)",
+    "8444 -> 127.0.0.1:8480 (private V2)"
+  ],
+  "existing_routes_compared_to_saved_config_unchanged": true,
+  "central_and_v1_containers_healthy": true
+}

@@ -1,0 +1,10 @@
+# CPU-only variant (no NVIDIA GPU, or GPU passthrough unavailable):
+#   docker compose -f docker-compose.yml -f docker-compose.cpu.yml up -d --build
+services:
+  attendx:
+    build:
+      args:
+        TORCH_VARIANT: cpu
+    environment:
+      ATTENDX_DEVICE: cpu
+    deploy: !reset {}

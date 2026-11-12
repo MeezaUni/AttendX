@@ -1,0 +1,127 @@
+{
+  "recorded_at": "2026-11-04T01:24:26.577251+05:30",
+  "implementation_commit": "5e8078b3175da5d3dd0e4e6e2dc7a3b371669a3a",
+  "branch": "codex/attendx-v2",
+  "baseline_commit": "6f67b26",
+  "backend_baseline": {
+    "passed": 93,
+    "skipped": 1
+  },
+  "backend_final": {
+    "command": "backend/.venv/Scripts/python.exe -m pytest backend/tests -q -o faulthandler_timeout=90",
+    "passed": 145,
+    "skipped": 1,
+    "warnings": 1,
+    "elapsed_seconds": 63.62,
+    "skip_reason": "ATTENDX_TEST_FACES not supplied",
+    "warning": "upstream Starlette/httpx deprecation"
+  },
+  "frontend": {
+    "camera_tests_passed": 2,
+    "typecheck_and_production_build": "passed",
+    "phone_face_inference": false,
+    "modules": 282
+  },
+  "lint": {
+    "targeted_new_and_modified_v2_python": "passed",
+    "git_diff_check": "passed"
+  },
+  "browser": {
+    "synthetic_fixture": true,
+    "flows": [
+      "admin setup",
+      "assigned CC confirmation",
+      "admin enrollment approval",
+      "student protected previews"
+    ],
+    "student_viewport": [
+      390,
+      844
+    ],
+    "horizontal_overflow": false,
+    "real_face_accuracy_test": false
+  },
+  "windows_package": {
+    "path": "dist\\faculty\\AttendXFaculty\\AttendXFaculty.exe",
+    "format": "PyInstaller onedir; distribute entire directory plus external models",
+    "exe_sha256": "9e1babe10bb2948eb647db02c18273281ab24831f431b1690d1c0efdc887059a",
+    "exe_bytes": 48656170,
+    "directory_bytes": 4809567331,
+    "native_smoke": {
+      "window_title": "AttendX Faculty V2",
+      "tabs": 3,
+      "locked": true,
+      "student_listener_started": false,
+      "model_files_external": true,
+      "qt_version": "6.12.0"
+    },
+    "model_check": {
+      "engine": {
+        "engine": "real",
+        "model_id": "adaface_ir101_webface4m",
+        "detector_loaded": true,
+        "embedder_loaded": true,
+        "landmarker_loaded": true,
+        "device": "cuda",
+        "error": null
+      },
+      "blank_frame_faces": 0
+    }
+  },
+  "offline_real_https_process_demo": {
+    "provision": {
+      "roster_count": 3,
+      "central_https_verified": true
+    },
+    "offline": {
+      "approved_offline": true,
+      "pending_after_connection_refused": 1
+    },
+    "restart": {
+      "approved_after_separate_process_restart": true,
+      "pending": 1
+    },
+    "sync": {
+      "central_approved_meetings": 1,
+      "central_roster_marks": 3,
+      "duplicate_retries": 2,
+      "remaining_outbox": 0
+    },
+    "synthetic_faces_used": false
+  },
+  "deployment": {
+    "private_portal": "https://YOUR-LAPTOP.YOUR-TAILNET.ts.net:8444/",
+    "health_https_certificate_verified": true,
+    "health": "ok",
+    "database": "ok",
+    "face_engine": "real",
+    "device": "cuda",
+    "admin_configured": false,
+    "mailpit": "healthy; synthetic local SMTP message captured",
+    "university_smtp_used": false,
+    "classroom_listener_published": false,
+    "public_deployment": false,
+    "git_push": false,
+    "v1_and_unrelated_services_preserved": true
+  },
+  "not_tested": [
+    "real hotspot start/stop/restore",
+    "phone CA trust and offline getUserMedia",
+    "consenting real-person enrollment/liveness/identity",
+    "physical entry and second QR scans",
+    "iOS/Android camera switching",
+    "simultaneous classroom load",
+    "CPU inference throughput",
+    "native notification delivery",
+    "real-room closing-hour hotspot cleanup",
+    "advanced replay/injection/deepfake resistance"
+  ],
+  "remaining_limits": [
+    "first real admin setup",
+    "authorized institutional email/domain/API configuration",
+    "full academic administration and reporting breadth",
+    "conflict-resolution workbench",
+    "local PIN recovery",
+    "threshold calibration and population accuracy"
+  ]
+}
