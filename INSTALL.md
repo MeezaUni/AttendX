@@ -1,5 +1,39 @@
 # Installing AttendX V2 on a new laptop
 
+## Quick start
+
+There are two separate installs.
+
+### Central server: one file
+
+Download [`AttendX-Server-Setup.cmd`](https://github.com/MeezaUni/AttendX/releases/download/v2.0.0/AttendX-Server-Setup.cmd)
+(also in the repository root) and double-click it. After asking for administrator rights it:
+
+1. installs Git, Python, WSL 2, Docker Desktop and (optionally) Tailscale with `winget`;
+2. starts Docker Desktop and waits until it is ready;
+3. clones AttendX into `C:\AttendX` and downloads and verifies the models;
+4. signs in to Tailscale (a browser window opens);
+5. writes `.env.v2`, builds and starts the server (GPU, or CPU if there is no NVIDIA GPU) and
+   creates the first administrator;
+6. publishes the portal with Tailscale Funnel on port 10000, unless that port is already used.
+
+Run it again at any time: finished steps are skipped. When Windows needs a restart (after
+enabling WSL or installing Docker Desktop), it restarts and continues automatically after you
+sign in. You still do a few things yourself: sign in to Tailscale in the browser, accept Docker
+Desktop's first-run agreement if it appears, and type the admin password. Windows may show a
+SmartScreen warning for a downloaded script; choose **More info → Run anyway**.
+
+Options: `-DryRun` (show what it would do), `-RepoDir <folder>`, `-Port <https port>`,
+`-NoTailscale`.
+
+### Faculty app: download
+
+The faculty Windows app is a separate download. See [step 4, Option A](#option-a-download-the-built-app-fastest).
+
+The rest of this guide is the same setup done by hand.
+
+## Manual setup
+
 Step-by-step setup on a fresh Windows 10/11 laptop. For day-to-day operation, classroom
 networking and the real-phone procedure, see [Operations](docs/v2/OPERATIONS.md).
 

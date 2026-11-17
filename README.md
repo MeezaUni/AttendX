@@ -63,7 +63,9 @@ flowchart LR
 
 ## Run
 
-Setting up on a new laptop? Follow the [installation guide](INSTALL.md).
+Setting up on a new laptop? Double-click [`AttendX-Server-Setup.cmd`](AttendX-Server-Setup.cmd) to
+install the whole central server, and download the faculty app from the
+[release](https://github.com/MeezaUni/AttendX/releases/tag/v2.0.0). Details: [installation guide](INSTALL.md).
 Read [operations](docs/v2/OPERATIONS.md) for exact startup/shutdown commands and certificate setup.
 V2 uses its own Docker project, image, containers and volume; V1 remains on port 8470/HTTPS 8443.
 
