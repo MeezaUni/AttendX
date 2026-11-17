@@ -118,10 +118,26 @@ Mailpit is a test catcher. Real delivery needs authorized SMTP settings (`ATTEND
 
 ## 4. Faculty Windows app
 
-### Option A: copy a built app (fastest)
+### Option A: download the built app (fastest)
 
-From an existing installation, copy the **entire** `dist\faculty\AttendXFaculty` folder,
-including `_internal\`, and the `models\` folder. Then run:
+Download every `AttendXFaculty-v2.0.0-win64-cuda.zip.00N` part from the
+[v2.0.0 release](https://github.com/MeezaUni/AttendX/releases/tag/v2.0.0) into one folder, then
+join and extract them in PowerShell:
+
+```powershell
+$name = "AttendXFaculty-v2.0.0-win64-cuda.zip"
+$out = [IO.File]::Create("$PWD\$name")
+Get-ChildItem "$name.0*" | Sort-Object Name | ForEach-Object { $in = [IO.File]::OpenRead($_.FullName); $in.CopyTo($out); $in.Close() }
+$out.Close()
+Expand-Archive $name -DestinationPath C:\AttendXFaculty
+C:\AttendXFaculty\AttendXFaculty\AttendXFaculty.exe
+```
+
+The release zip already contains the `models` folder beside the executable, so no
+`--models-dir` is needed. Add `--device cpu` on laptops without an NVIDIA GPU.
+
+Alternatively, copy the **entire** `dist\faculty\AttendXFaculty` folder (including
+`_internal\`) and the `models\` folder from an existing installation. Then run:
 
 ```powershell
 .\dist\faculty\AttendXFaculty\AttendXFaculty.exe --models-dir C:\AttendX\models
