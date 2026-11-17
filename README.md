@@ -63,6 +63,7 @@ flowchart LR
 
 ## Run
 
+Setting up on a new laptop? Follow the [installation guide](INSTALL.md).
 Read [operations](docs/v2/OPERATIONS.md) for exact startup/shutdown commands and certificate setup.
 V2 uses its own Docker project, image, containers and volume; V1 remains on port 8470/HTTPS 8443.
 
@@ -110,6 +111,7 @@ Most face-flow tests use deterministic synthetic observations; these are not acc
 
 | Document | Contents |
 |---|---|
+| [Installation](INSTALL.md) | Fresh-laptop setup: prerequisites, models, central server, faculty app, data migration |
 | [Handover](docs/v2/HANDOVER.md) | Feature status, evidence, limitations and blockers |
 | [Operations](docs/v2/OPERATIONS.md) | Startup, shutdown, desktop build, models, real-phone procedure |
 | [API](docs/v2/API.md) | Auth, enrollment, sync and classroom contracts |
