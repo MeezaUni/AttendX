@@ -20,13 +20,17 @@ export default function Classroom() {
   const [prompt, setPrompt] = useState("");
   const [action, setAction] = useState("center");
   const [zoom, setZoom] = useState(1);
+  const [scanPurpose, setScanPurpose] = useState<"entry" | "submit">("submit");
+  const [scanHint, setScanHint] = useState("");
+  const [submissionPending, setSubmissionPending] = useState(false);
   const scanZoom = useRef(1);
   const token = useRef("");
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
   const alive = useRef(true);
-  const scanner = useRef<{ stop: () => void } | null>(null);
+  const scanner = useRef<{ stop: () => void; submitting: boolean } | null>(null);
   const entering = useRef(false);
+  const entryGeneration = useRef(0);
   const lifetime = useRef(new AbortController());
   async function request<T>(route: string, body: unknown): Promise<T> {
     const headers: Record<string, string> = {
@@ -56,15 +60,27 @@ export default function Classroom() {
     window.history.replaceState(null, "", "/classroom");
     if (qr && !entering.current) {
       entering.current = true;
+      const generation = entryGeneration.current;
+      const current = () => alive.current && entryGeneration.current === generation;
       request<{ attempt_token: string }>("entry", { qr_token: qr })
         .then((r) => {
+          if (!current()) return;
           token.current = r.attempt_token;
           setPhase("roll");
         })
-        .catch((e) => setError(errorText(e)));
+        .catch((e) => {
+          if (!current()) return;
+          const reason = errorText(e);
+          // Phones often open the link after the QR has rotated: offer the in-page scanner.
+          setError(
+            /expired or invalid|invalid QR/i.test(reason)
+              ? "That QR changed before the page opened. Tap “Scan attendance QR” to scan it here."
+              : reason,
+          );
+        });
     } else if (!qr && !entering.current)
       setMessage(
-        "Connect to the faculty hotspot and scan the current attendance QR to begin.",
+        "Connect to the faculty hotspot, then tap “Scan attendance QR” and point at the faculty screen.",
       );
     return () => {
       alive.current = false;
@@ -157,20 +173,54 @@ export default function Classroom() {
       }
     }
   };
-  const scan = async () => {
+  // QR errors worth ignoring while the camera keeps scanning: the code rotated, was read a
+  // moment too late, or is the same code already used for entry ("scan a fresh QR").
+  const retryable = (text: string) =>
+    /expired or invalid|invalid QR|fresh QR|current classroom QR/i.test(text);
+  const scan = async (purpose: "entry" | "submit" = "submit") => {
+    if (scanner.current?.submitting) return;
+    // A manual scan supersedes any entry request still opening from the URL fragment.
+    entryGeneration.current++;
+    scanner.current?.stop();
+    const cancellation = new AbortController();
+    let acquired: MediaStream | null = null;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Register ownership before loading the reader or asking for camera permission, so
+    // Cancel, unmount and a replacement scan also invalidate those pending operations.
+    const controls = {
+      submitting: false,
+      stop: () => {
+        cancellation.abort();
+        clearTimeout(timer);
+        stopCamera(acquired);
+        if (stream.current === acquired) stream.current = null;
+        if (scanner.current === controls) scanner.current = null;
+      },
+    };
+    scanner.current = controls;
+    const active = () => alive.current && !cancellation.signal.aborted && scanner.current === controls;
+    if (purpose === "entry") {
+      token.current = "";
+      setRoll("");
+    }
+    setScanPurpose(purpose);
     setPhase("scanning");
     setError("");
+    setMessage("");
+    setScanHint("");
+    setSubmissionPending(false);
+    const fallback = purpose === "entry" ? "entry" : "match";
     try {
       const { BrowserQRCodeReader } = await import("@zxing/browser");
-      if (!alive.current) return;
+      if (!active()) return;
       const reader = new BrowserQRCodeReader();
       const target = video.current!;
-      const acquired = await startCamera(target, lifetime.current.signal, {
+      acquired = await startCamera(target, cancellation.signal, {
         facingMode: { ideal: "environment" },
         width: { ideal: 1920 },
         height: { ideal: 1080 },
       });
-      if (!alive.current) {
+      if (!active()) {
         stopCamera(acquired);
         return;
       }
@@ -178,18 +228,9 @@ export default function Classroom() {
       setZoom(1);
       scanZoom.current = 1;
       const canvas = document.createElement("canvas");
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      let stopped = false;
-      const controls = {
-        stop: () => {
-          stopped = true;
-          clearTimeout(timer);
-          stopCamera(acquired);
-        },
-      };
-      scanner.current = controls;
+      const tried = new Set<string>();
       const decode = async () => {
-        if (stopped || !alive.current) {
+        if (!active()) {
           controls.stop();
           return;
         }
@@ -203,41 +244,67 @@ export default function Classroom() {
             /* No barcode in this frame; keep scanning the zoomed region. */
           }
         }
-        if (!text) {
+        let qr = "";
+        if (text) {
+          try {
+            const url = new URL(text, location.origin);
+            if (url.pathname === "/classroom" && url.hash) qr = url.hash.slice(1);
+          } catch {
+            /* not a URL */
+          }
+          if (!qr) setScanHint("That is not the AttendX attendance QR. Point at the faculty screen.");
+        }
+        if (!qr || tried.has(qr)) {
           timer = setTimeout(() => void decode(), 180);
           return;
         }
-        controls.stop();
-        scanner.current = null;
-        stream.current = null;
+        tried.add(qr);
         try {
-          const url = new URL(text, location.origin);
-          if (
-            url.origin !== location.origin ||
-            url.pathname !== "/classroom" ||
-            !url.hash
-          )
-            throw new Error(
-              "Scan the attendance QR displayed by your faculty laptop.",
-            );
-          const result = await request<{ message: string }>("submit", {
-            qr_token: url.hash.slice(1),
-          });
-          if (!alive.current) return;
-          setMessage(result.message);
-          setPhase("submitted");
-        } catch (e) {
-          if (alive.current) {
-            setError(errorText(e));
-            setPhase("match");
+          if (purpose === "entry") {
+            const r = await request<{ attempt_token: string }>("entry", { qr_token: qr });
+            if (!active()) return;
+            controls.stop();
+            token.current = r.attempt_token;
+            setPhase("roll");
+          } else {
+            // The server consumes MATCH when this POST succeeds. Keep its response even
+            // if a Cancel click was queued before React disables the button.
+            controls.submitting = true;
+            setSubmissionPending(true);
+            const result = await request<{ message: string }>("submit", { qr_token: qr });
+            if (!active()) return;
+            controls.submitting = false;
+            setSubmissionPending(false);
+            controls.stop();
+            setMessage(result.message);
+            setPhase("submitted");
           }
+        } catch (e) {
+          if (!active()) return;
+          controls.submitting = false;
+          setSubmissionPending(false);
+          const reason = errorText(e);
+          if (retryable(reason)) {
+            // The QR rotated or is the one used for entry: keep the camera on and read the next code.
+            setScanHint(
+              purpose === "submit"
+                ? "Waiting for the next QR… keep the camera on the faculty screen."
+                : "QR changed — hold steady, reading the next one…",
+            );
+            timer = setTimeout(() => void decode(), 180);
+            return;
+          }
+          controls.stop();
+          setError(reason);
+          setPhase(fallback);
         }
       };
       void decode();
     } catch (e) {
-      if (alive.current) {
+      if (active()) {
+        controls.stop();
         setError(errorText(e));
-        setPhase("match");
+        setPhase(fallback);
       }
     }
   };
@@ -272,7 +339,10 @@ export default function Classroom() {
           action={action}
           prompt={
             phase === "scanning"
-              ? "Center the QR. Use zoom if you are far away."
+              ? scanHint ||
+                (scanPurpose === "entry"
+                  ? "Point at the attendance QR on the faculty screen. Use zoom if far away."
+                  : "Scan a fresh QR. Use zoom if you are far away.")
               : prompt || "Look straight — opening your camera…"
           }
           scanning={phase === "scanning"}
@@ -363,17 +433,41 @@ export default function Classroom() {
           Faculty laptop is checking liveness and your face…
         </p>
       )}
+      {phase === "entry" && (
+        <Button className="w-full" onClick={() => void scan("entry")}>
+          Scan attendance QR
+        </Button>
+      )}
+      {phase === "scanning" && (
+        <Button
+          variant="secondary"
+          className="w-full"
+          disabled={submissionPending}
+          onClick={() => {
+            if (scanner.current?.submitting) return;
+            scanner.current?.stop();
+            scanner.current = null;
+            setPhase(scanPurpose === "entry" ? "entry" : "match");
+          }}
+        >
+          Cancel scanning
+        </Button>
+      )}
       {phase === "match" && (
-        <Button className="w-full" onClick={() => void scan()}>
+        <Button className="w-full" onClick={() => void scan("submit")}>
           Scan fresh QR to submit
         </Button>
       )}
       {phase === "review" && (
-        <Alert tone="amber">
-          Ask faculty to check you in person and mark attendance manually. A
-          failed or incomplete check does not mark you absent. To retry, scan a
-          new entry QR.
-        </Alert>
+        <>
+          <Alert tone="amber">
+            Ask faculty to check you in person and mark attendance manually. A
+            failed or incomplete check does not mark you absent.
+          </Alert>
+          <Button className="w-full" variant="secondary" onClick={() => void scan("entry")}>
+            Try again: scan a new attendance QR
+          </Button>
+        </>
       )}
       {phase === "submitted" && (
         <p className="font-medium">

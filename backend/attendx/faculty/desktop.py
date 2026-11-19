@@ -700,7 +700,13 @@ class FacultyWindow(QMainWindow):
         self.editing = True
         try:
             s = self.runtime.session(self.selected_session)
-            dialog = HeadcountReviewDialog(s, self.headcount.value(), self)
+            sid = self.selected_session
+            dialog = HeadcountReviewDialog(
+                s,
+                self.headcount.value(),
+                self,
+                mark=lambda student, status, why: self.runtime.mark(sid, student, status, why),
+            )
             dialog.exec()
             if dialog.action:
                 self.headcount.setValue(dialog.headcount.value())
@@ -1071,7 +1077,8 @@ def main():
     logging.basicConfig(
         filename=args.data_dir / "faculty.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
     )
-    engine = RealFaceEngine(args.models_dir, args.device, verify_hashes=True)
+    # Classroom phones often show students sitting behind; verify the main central face only.
+    engine = RealFaceEngine(args.models_dir, args.device, verify_hashes=True, primary_face=True)
     if args.check_models:
         import numpy as np
 

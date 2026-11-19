@@ -5,9 +5,11 @@ from PySide6.QtWidgets import (
     QDialog,
     QFormLayout,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QListWidget,
     QListWidgetItem,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QSpinBox,
@@ -18,9 +20,11 @@ from attendx.faculty.reconciliation import headcount_report
 
 
 class HeadcountReviewDialog(QDialog):
-    def __init__(self, session, count, parent):
+    def __init__(self, session, count, parent, mark=None):
         super().__init__(parent)
         self.session, self.action, self.review_student_id = session, None, None
+        # mark(student_id, status, reason) -> updated session; decisions are made right here.
+        self.mark = mark
         self.setWindowTitle("Cross-check attendance and headcount")
         available = parent.screen().availableGeometry()
         self.resize(min(760, available.width() - 40), min(650, available.height() - 60))
@@ -42,6 +46,18 @@ class HeadcountReviewDialog(QDialog):
         self.candidates.setMinimumHeight(120)
         self.candidates.itemDoubleClicked.connect(lambda _: self.review_selected())
         layout.addWidget(self.candidates, 1)
+        quick = QHBoxLayout()
+        self.present_button = QPushButton("Mark selected Present")
+        self.present_button.clicked.connect(lambda: self.mark_selected("PRESENT"))
+        self.absent_button = QPushButton("Mark selected Absent")
+        self.absent_button.clicked.connect(lambda: self.mark_selected("ABSENT"))
+        self.all_absent_button = QPushButton("Mark all unmarked Absent")
+        self.all_absent_button.clicked.connect(self.mark_unmarked_absent)
+        for button in (self.present_button, self.absent_button, self.all_absent_button):
+            button.setAutoDefault(False)
+            button.setVisible(mark is not None)
+            quick.addWidget(button)
+        layout.addLayout(quick)
         self.reason_label = QLabel("If the discrepancy remains after cross-checking, explain it before approving:")
         self.reason_label.setWordWrap(True)
         layout.addWidget(self.reason_label)
@@ -101,11 +117,49 @@ class HeadcountReviewDialog(QDialog):
         if self.candidates.count() and not self.candidates.currentItem():
             self.candidates.setCurrentRow(0)
         self.review_button.setEnabled(bool(report["candidates"]))
+        editable = self.mark is not None and self.session["state"] != "APPROVED"
+        self.present_button.setEnabled(editable and bool(report["candidates"]))
+        self.absent_button.setEnabled(editable and bool(report["candidates"]))
+        self.all_absent_button.setEnabled(editable and report["unmarked"] > 0)
+        self.all_absent_button.setText(
+            f"Mark all {report['unmarked']} unmarked Absent" if report["unmarked"] else "No unmarked students"
+        )
         self.reason.setVisible(delta != 0)
         self.reason_label.setVisible(delta != 0)
         self.approve_button.setEnabled(
             report["can_approve"] and (delta == 0 or len(self.reason.toPlainText().strip()) >= 3)
         )
+
+    def _reason(self, title, default):
+        text, ok = QInputDialog.getText(self, title, "Reason / physical cross-check (required)", text=default)
+        return text.strip() if ok else None
+
+    def _apply(self, changes, reason):
+        try:
+            for student_id, status in changes:
+                self.session = self.mark(student_id, status, reason)
+        except ValueError as exc:
+            QMessageBox.warning(self, "Mark attendance", str(exc))
+        self.refresh()
+
+    def mark_selected(self, status):
+        item = self.candidates.currentItem()
+        if not item or self.mark is None:
+            return
+        default = "Verified present in class" if status == "PRESENT" else "Not present in class"
+        reason = self._reason(f"Mark {status.title()}", default)
+        if reason is not None:
+            self._apply([(item.data(Qt.ItemDataRole.UserRole), status)], reason)
+
+    def mark_unmarked_absent(self):
+        if self.mark is None:
+            return
+        unmarked = [r["student_id"] for r in self.session["roster"] if r["status"] == "UNMARKED"]
+        if not unmarked:
+            return
+        reason = self._reason(f"Mark {len(unmarked)} unmarked students Absent", "Not present at headcount")
+        if reason is not None:
+            self._apply([(sid, "ABSENT") for sid in unmarked], reason)
 
     def review_selected(self):
         item = self.candidates.currentItem()

@@ -199,9 +199,19 @@ def test_qr_wrong_session_expired_closed_and_ip_binding(runtime, clock):
     qr, attempt, _ = entry(runtime, s)
     with pytest.raises(ValueError):
         runtime.claim(attempt["attempt_token"], "S001", "192.168.137.9")
+    # A QR scanned a few seconds ago still works (phones are slow to open links) ...
     clock[0] += timedelta(seconds=6)
+    assert runtime.enter(qr["token"], "192.168.137.2")["status"] == "ENTRY"
+    # ... but not once it is older than the short grace window.
+    clock[0] += timedelta(seconds=15)
     with pytest.raises(ValueError):
         runtime.enter(qr["token"], "192.168.137.2")
+    current = runtime.current_qr(s["id"])["token"]
+    with pytest.raises(ValueError):  # a current epoch with a tampered signature is still rejected
+        runtime.enter(current.rsplit(".", 1)[0] + "." + "0" * 32, "192.168.137.2")
+    future = current.split(".")
+    with pytest.raises(ValueError):  # a QR from the future is rejected even with the right shape
+        runtime.enter(f"{future[0]}.{int(future[1]) + 1}.{future[2]}", "192.168.137.2")
     runtime.close_collection(s["id"])
     with pytest.raises(ValueError):
         runtime.current_qr(s["id"])

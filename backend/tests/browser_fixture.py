@@ -1,7 +1,5 @@
 """Isolated synthetic UI fixture. Never use this factory for a real deployment."""
 
-from pathlib import Path
-
 from sqlalchemy import select
 
 from attendx.config import PROJECT_DIR, Settings

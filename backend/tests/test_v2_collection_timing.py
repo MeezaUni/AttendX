@@ -101,11 +101,13 @@ def test_central_ingestion_checks_grace_from_the_original_grant(
     from attendx.face.engine import FakeFaceEngine
     from attendx.faculty.runtime import FacultyRuntime, stamp
     from attendx.models import TimetableEntry
-    from attendx.v2 import sync
+    from attendx.v2 import router, sync
     from tests.test_v2_identity import activate, faculty, ok
 
     section, course = make_section_course(admin)
     student, _ = activate(admin, app, section)
+    # Assignments and signed grants must share the synthetic day, including around IST midnight.
+    monkeypatch.setattr(router, "local_today", lambda tz: clock[0].date())
     teacher, lecturer = faculty(admin, app, section, course)
     monkeypatch.setattr(sync, "utcnow", lambda: clock[0])
     with app.state.db.SessionLocal() as db:

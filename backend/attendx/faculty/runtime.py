@@ -24,6 +24,9 @@ from attendx.services.collection_timing import COLLECTION_SECONDS, collection_st
 from attendx.services.verification import cosine, decide
 from attendx.v2.identity import PIPELINE_VERSION
 
+QR_EPOCH_SECONDS = 5  # the displayed classroom QR rotates this often
+QR_GRACE_EPOCHS = 3  # a scanned QR stays valid for its own window plus three older ones (15-20 s)
+
 
 def stamp(value):
     return value.isoformat() + "Z"
@@ -327,22 +330,36 @@ class FacultyRuntime:
             self.attempts = {k: a for k, a in self.attempts.items() if a["session_id"] != sid}
             return self._public_session(s)
 
+    @staticmethod
+    def _qr_token(s, epoch):
+        message = f"{s['id']}.{epoch}"
+        signature = hmac.new(bytes.fromhex(s["qr_secret"]), message.encode(), hashlib.sha256).hexdigest()[:32]
+        return message + "." + signature
+
     def current_qr(self, sid):
         with self.lock:
             s, _ = self._open(sid)
-            epoch = int(self.now().timestamp()) // 5
-            message = f"{sid}.{epoch}"
-            signature = hmac.new(bytes.fromhex(s["qr_secret"]), message.encode(), hashlib.sha256).hexdigest()[:32]
-            return {"token": message + "." + signature, "seconds_remaining": 5 - int(self.now().timestamp()) % 5}
+            epoch = int(self.now().timestamp()) // QR_EPOCH_SECONDS
+            return {
+                "token": self._qr_token(s, epoch),
+                "seconds_remaining": QR_EPOCH_SECONDS - int(self.now().timestamp()) % QR_EPOCH_SECONDS,
+            }
 
     def _qr(self, token):
+        """Accept the current QR or one from the last QR_GRACE_EPOCHS rotations.
+
+        Phones take a few seconds to open a scanned link, so an exact-current-only rule rejected
+        most real scans. The grace window stays short; the second scan must still be newer than
+        the entry scan, and attempts remain bound to one device and session.
+        """
         try:
             sid, slot, signature = token.split(".")
             s, snap = self._open(sid)
-            expected = self.current_qr(sid)["token"]
-            if not hmac.compare_digest(token, expected):
+            epoch = int(slot)
+            now = int(self.now().timestamp()) // QR_EPOCH_SECONDS
+            if not now - QR_GRACE_EPOCHS <= epoch <= now or not hmac.compare_digest(token, self._qr_token(s, epoch)):
                 raise ValueError("QR expired or invalid; scan the current classroom QR")
-            return s, snap, int(slot)
+            return s, snap, epoch
         except (TypeError, KeyError, AttributeError) as exc:
             raise ValueError("invalid QR token") from exc
 

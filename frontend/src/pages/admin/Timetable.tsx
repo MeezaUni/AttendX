@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Alert, Badge, Button, Card, Empty, Field, Input, Loading, Modal, PageHeader, Select, Table, Tabs, Td, cx } from "../../components/ui";
+import { Alert, Button, Card, Empty, Field, Input, Loading, Modal, PageHeader, Select, Table, Tabs, Td, cx } from "../../components/ui";
 import { api, errorText } from "../../lib/api";
 import { WEEKDAYS, fmtDate, useApi } from "../../lib/hooks";
 import type { Course, Section } from "./Students";
@@ -59,6 +59,16 @@ function WeekGrid() {
   if (!sections.length) return <Empty>Create a section first (Courses &amp; sections).</Empty>;
   const days = showSat || entries.data?.some((e) => e.weekday === 5) ? 6 : 5;
   const at = (wd: number, p: number) => entries.data?.find((e) => e.weekday === wd && e.period_number === p);
+  // Columns in time order: teaching periods, break periods, and the unnumbered gaps between
+  // consecutive periods (e.g. 10:40-10:50), shown like a printed university timetable.
+  type Col = { kind: "period"; p: Period } | { kind: "break"; label: string; start: string; end: string };
+  const cols: Col[] = [];
+  periods.forEach((p, i) => {
+    const prev = periods[i - 1];
+    if (prev && prev.end_time < p.start_time) cols.push({ kind: "break", label: "Break", start: prev.end_time, end: p.start_time });
+    cols.push(p.is_break ? { kind: "break", label: p.label || "Break", start: p.start_time, end: p.end_time } : { kind: "period", p });
+  });
+  const tint = (i: number) => (i % 2 ? "bg-cyan-100 dark:bg-cyan-900/40" : "bg-amber-100 dark:bg-amber-900/40");
 
   return (
     <Card
@@ -78,51 +88,70 @@ function WeekGrid() {
       }
     >
       <div className="-mx-4 overflow-x-auto sm:mx-0">
-        <table className="w-full min-w-[720px] border-separate border-spacing-1 text-sm">
+        <table className="w-full min-w-[980px] table-fixed border-collapse text-sm">
           <thead>
             <tr>
-              <th className="w-28 text-left text-xs font-medium text-slate-500">Period</th>
-              {WEEKDAYS.slice(0, days).map((d) => (
-                <th key={d} className="text-left text-xs font-medium text-slate-500">
-                  {d}
-                </th>
-              ))}
+              <th className="w-20 border border-slate-300 dark:border-slate-600" />
+              {cols.map((c, i) =>
+                c.kind === "break" ? (
+                  <th key={`b${i}`} className="w-14 border border-slate-300 bg-slate-50 px-1 py-2 font-normal dark:border-slate-600 dark:bg-slate-800">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{c.label === "Break" ? "Break" : "Lunch"}</p>
+                    <p className="tabular text-[10px] leading-tight text-slate-500">{c.start}<br />{c.end}</p>
+                  </th>
+                ) : (
+                  <th key={c.p.number} className={cx("border border-slate-300 px-1 py-2 font-normal dark:border-slate-600", tint(c.p.number))}>
+                    <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">{c.p.number}</p>
+                    <p className="tabular text-[11px] text-slate-600 dark:text-slate-300">
+                      {c.p.start_time} – {c.p.end_time}
+                    </p>
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
-            {periods.map((p) => (
-              <tr key={p.number}>
-                <td className="align-top text-xs text-slate-500">
-                  <p className="font-semibold text-slate-700">P{p.number}</p>
-                  <p className="tabular">
-                    {p.start_time}–{p.end_time}
-                  </p>
-                  {p.is_break && <Badge tone="amber">break</Badge>}
-                </td>
-                {WEEKDAYS.slice(0, days).map((_, wd) => {
+            {WEEKDAYS.slice(0, days).map((day, wd) => (
+              <tr key={day}>
+                <th className={cx("border border-slate-300 text-2xl font-semibold text-slate-900 dark:border-slate-600 dark:text-slate-50", tint(wd))}>
+                  {day.slice(0, 3)}
+                </th>
+                {cols.map((c, i) => {
+                  if (c.kind === "break") {
+                    // One tall break column spanning every day, as on the printed timetable.
+                    if (wd !== 0) return null;
+                    return (
+                      <td key={`b${i}`} rowSpan={days} className="border border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-800">
+                        <span className="mx-auto block rotate-180 text-center text-2xl tracking-wide text-slate-700 [writing-mode:vertical-rl] dark:text-slate-200">
+                          {c.label === "Break" ? "Break" : c.label}
+                        </span>
+                      </td>
+                    );
+                  }
+                  const p = c.p;
                   const e = at(wd, p.number);
                   return (
-                    <td key={wd} className="align-top">
+                    <td key={p.number} className="h-24 border border-slate-300 p-0 dark:border-slate-600">
                       <button
                         onClick={() => setEdit({ weekday: wd, period: p.number, entry: e })}
-                        disabled={p.is_break}
+                        aria-label={`${day} period ${p.number}${e?.course_code ? `: ${e.course_code}` : ""}`}
                         className={cx(
-                          "h-16 w-full rounded-lg p-2 text-left transition-colors",
-                          p.is_break ? "bg-amber-50/60 text-amber-700" : e?.is_break ? "bg-amber-50 ring-1 ring-amber-200" : e ? "bg-navy-50 ring-1 ring-navy-100 hover:bg-navy-100" : "border border-dashed border-slate-200 text-slate-300 hover:border-navy-300 hover:text-navy-600",
+                          "flex h-full w-full flex-col items-center justify-between px-1 py-1.5 text-center transition-colors",
+                          e?.is_break ? "bg-slate-50 dark:bg-slate-800" : e ? "bg-white hover:bg-navy-50 dark:bg-slate-900 dark:hover:bg-slate-800" : "text-slate-300 hover:bg-navy-50 hover:text-navy-600 dark:hover:bg-slate-800",
                         )}
                       >
-                        {p.is_break ? (
-                          <span className="text-xs">Break</span>
-                        ) : e?.is_break ? (
-                          <span className="text-xs font-medium text-amber-800">Break</span>
+                        {e?.is_break ? (
+                          <span className="m-auto text-xs font-medium text-slate-600">Break</span>
                         ) : e ? (
                           <>
-                            <span className="block font-semibold text-navy-900">{e.course_code}</span>
-                            <span className="block truncate text-xs text-slate-500">{e.faculty ?? e.course_name}</span>
-                            {(e.start_time || e.end_time) && <span className="text-[10px] text-navy-600">custom class times</span>}
+                            <span className="block w-full truncate text-[10px] text-slate-500">{e.faculty ?? ""}</span>
+                            <span className="block font-semibold text-slate-900 dark:text-slate-50">{e.course_code}</span>
+                            <span className="flex w-full justify-between text-[10px] text-slate-500">
+                              <span>{e.start_time || e.end_time ? "custom time" : ""}</span>
+                              <span className="font-medium text-slate-700 dark:text-slate-300">{e.room}</span>
+                            </span>
                           </>
                         ) : (
-                          <span className="text-lg">+</span>
+                          <span className="m-auto text-lg">+</span>
                         )}
                       </button>
                     </td>

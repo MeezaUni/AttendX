@@ -32,6 +32,23 @@ The faculty Windows app is a separate download. See [step 4, Option A](#option-a
 
 The rest of this guide is the same setup done by hand.
 
+## Daily startup after setup
+
+Double-click `scripts\Start-AttendX.cmd`, or the **Start AttendX** desktop shortcut if present.
+It starts Docker Desktop when needed, starts the installed AttendX V2 containers without
+rebuilding them, reconnects Tailscale, and checks the public portal on port 10000. It opens
+the local portal and Mailpit, then lets you choose an existing **AttendX Faculty** shortcut.
+If college Wi-Fi blocks Tailscale, enable NekoBox **TUN mode** or use phone tethering and retry.
+
+For checks without browser windows or prompts:
+
+```powershell
+cmd /c scripts\Start-AttendX.cmd -NoBrowser -NoPrompt
+```
+
+Exit code 0 means every check passed; code 1 means a check failed or could not be completed.
+This launcher uses an existing installation, `.env.v2`, model files and Docker images.
+
 ## Manual setup
 
 Step-by-step setup on a fresh Windows 10/11 laptop. For day-to-day operation, classroom

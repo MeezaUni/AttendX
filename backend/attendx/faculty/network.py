@@ -150,6 +150,24 @@ def install_shared_tls(runtime, central, credential, address):
     return directory
 
 
+
+# Windows TetheringWiFiBand values.
+BAND_AUTO, BAND_2_4_GHZ, BAND_5_GHZ = 0, 1, 2
+
+
+def hotspot_band_order(preferred):
+    """Bands to try for the classroom hotspot, first the one chosen in Windows settings.
+
+    A single Wi-Fi card that is also connected to an upstream Wi-Fi network (for example a
+    phone hotspot on 2.4 GHz) often cannot broadcast on a different band; "Auto" then fails
+    with an UNKNOWN status, so explicit 2.4 GHz and 5 GHz attempts follow.
+    """
+    order = []
+    for band in (int(preferred or 0), BAND_AUTO, BAND_2_4_GHZ, BAND_5_GHZ):
+        if band not in order:
+            order.append(band)
+    return order
+
 class HotspotController:
     def __init__(self):
         self.manager = None
@@ -189,17 +207,28 @@ class HotspotController:
         if not 1 <= len(ssid.encode()) <= 32 or not 8 <= len(password) <= 63:
             raise ValueError("hotspot SSID must be 1–32 bytes and password 8–63 characters")
         self.previous_configuration = manager.get_current_access_point_configuration()
-        config = NetworkOperatorTetheringAccessPointConfiguration()
-        config.ssid, config.passphrase = ssid, password
-        await manager.configure_access_point_async(config)
-        result = await manager.start_tethering_async()
-        if int(result.status) not in (0, 9):
-            await manager.configure_access_point_async(self.previous_configuration)
-            self.previous_configuration = None
-            raise ValueError(
-                f"Windows could not start Mobile Hotspot ({result.status.name}); manual attendance remains available"
-            )
-        self.started_by_app = True
+        result = None
+        for band in hotspot_band_order(getattr(self.previous_configuration, "band", 0)):
+            config = NetworkOperatorTetheringAccessPointConfiguration()
+            config.ssid, config.passphrase = ssid, password
+            try:
+                from winrt.windows.networking.networkoperators import TetheringWiFiBand
+
+                config.band = TetheringWiFiBand(band)
+            except Exception:  # older Windows builds have no band selection
+                pass
+            await manager.configure_access_point_async(config)
+            result = await manager.start_tethering_async()
+            if int(result.status) in (0, 9):
+                self.started_by_app = True
+                return
+        await manager.configure_access_point_async(self.previous_configuration)
+        self.previous_configuration = None
+        raise ValueError(
+            f"Windows could not start Mobile Hotspot ({result.status.name}). If this laptop gets internet over "
+            "Wi-Fi, connect it by USB tethering or Ethernet instead so the Wi-Fi card is free; "
+            "manual attendance remains available"
+        )
 
     def start(self, ssid, password):
         asyncio.run(self._start(ssid, password))

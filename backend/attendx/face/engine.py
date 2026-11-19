@@ -152,13 +152,34 @@ def metrics_from_landmarks(lm: NDArray[np.float64], blink: float) -> FrameMetric
     )
 
 
+def primary_index(boxes: list[tuple[float, float, float, float]], width: float, height: float) -> int:
+    """Index of the main subject among several faces: the largest face, favouring the centre.
+
+    Used in classrooms, where students behind the person holding the phone are often visible.
+    Score = face size (fraction of the shorter image side) minus half the centre distance
+    (fraction of the image diagonal), so a large face slightly off-centre still wins.
+    """
+    short, diag = max(min(width, height), 1e-6), max(float(np.hypot(width, height)), 1e-6)
+
+    def score(b: tuple[float, float, float, float]) -> float:
+        x0, y0, x1, y1 = b
+        size = min(x1 - x0, y1 - y0) / short
+        dist = float(np.hypot((x0 + x1) / 2 - width / 2, (y0 + y1) / 2 - height / 2)) / diag
+        return size - 0.5 * dist
+
+    return max(range(len(boxes)), key=lambda i: score(boxes[i]))
+
+
 class RealFaceEngine:
     model_id = spec.ADAFACE_IR101.backbone_id
 
-    def __init__(self, models_dir: Path, device: str = "auto", verify_hashes: bool = True):
+    def __init__(self, models_dir: Path, device: str = "auto", verify_hashes: bool = True, primary_face: bool = False):
         self.models_dir = models_dir
         self.device_pref = device
         self.verify_hashes = verify_hashes
+        # False (central enrollment): exactly one face required. True (classroom): use the main
+        # central face and ignore people in the background.
+        self.primary_face = primary_face
         self._det: Any = None
         self._ada: Any = None
         self._lm: Any = None
@@ -200,7 +221,7 @@ class RealFaceEngine:
                 raise FileNotFoundError(f"MediaPipe model missing: {path}")
             opts = vision.FaceLandmarkerOptions(
                 base_options=BaseOptions(model_asset_buffer=path.read_bytes()),
-                num_faces=2,
+                num_faces=4 if self.primary_face else 2,
                 output_face_blendshapes=True,
                 min_face_detection_confidence=0.5,
                 min_face_presence_confidence=0.5,
@@ -251,6 +272,9 @@ class RealFaceEngine:
         with self._lock:
             dets = self._detector().detect(rgb)
             strong = [d for d in dets if d.score >= 0.5]
+            if self.primary_face and len(strong) > 1:
+                h, w = rgb.shape[:2]
+                strong = [strong[primary_index([tuple(map(float, d.box[:4])) for d in strong], w, h)]]
             obs = FaceObservation(n_faces=len(strong))
             if len(strong) != 1:
                 obs.problems = quality_problems(obs, rt, check_norm=False)
@@ -276,12 +300,21 @@ class RealFaceEngine:
             image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(rgb))
             res = self._landmarker().detect(image)
         faces = res.face_landmarks or []
-        if len(faces) != 1:
+        pick = 0
+        if self.primary_face and len(faces) > 1:
+            # Use image pixels, as observe() does, so both paths preserve the aspect ratio.
+            h, w = rgb.shape[:2]
+            boxes = [
+                (min(p.x for p in f) * w, min(p.y for p in f) * h, max(p.x for p in f) * w, max(p.y for p in f) * h)
+                for f in faces
+            ]
+            pick = primary_index(boxes, w, h)
+        elif len(faces) != 1:
             return FrameMetrics(n_faces=len(faces))
-        lm = np.array([[p.x, p.y] for p in faces[0]], dtype=np.float64)
+        lm = np.array([[p.x, p.y] for p in faces[pick]], dtype=np.float64)
         blink = 0.0
-        if res.face_blendshapes:
-            scores = {c.category_name: c.score for c in res.face_blendshapes[0]}
+        if res.face_blendshapes and len(res.face_blendshapes) > pick:
+            scores = {c.category_name: c.score for c in res.face_blendshapes[pick]}
             blink = (scores.get("eyeBlinkLeft", 0.0) + scores.get("eyeBlinkRight", 0.0)) / 2
         return metrics_from_landmarks(lm, blink)
 

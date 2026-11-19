@@ -101,6 +101,41 @@ def test_headcount_dialog_allows_recount_before_final_approval(window):
     assert view.runtime.pending_events() == []
 
 
+def test_headcount_dialog_marks_students_without_leaving_the_cross_check(window, monkeypatch):
+    from PySide6.QtWidgets import QInputDialog
+
+    from attendx.faculty.review_ui import HeadcountReviewDialog
+
+    _, view = window
+    session = view.runtime.start_session(1, 1, 1)
+    sid = session["id"]
+    view.runtime.close_collection(sid)
+    reasons = []
+
+    def answer(_parent, _title, _label, text=""):
+        reasons.append(text)
+        return text, True
+
+    monkeypatch.setattr(QInputDialog, "getText", answer)
+    dialog = HeadcountReviewDialog(
+        view.runtime.session(sid), 1, view, mark=lambda student, status, why: view.runtime.mark(sid, student, status, why)
+    )
+    assert dialog.report["unmarked"] == 3 and not dialog.approve_button.isEnabled()
+    dialog.candidates.setCurrentRow(0)
+    first = dialog.candidates.currentItem().data(0x0100)  # Qt.UserRole
+    dialog.mark_selected("PRESENT")
+    assert dialog.report["unmarked"] == 2 and dialog.report["present"] == 1
+    assert dialog.all_absent_button.text() == "Mark all 2 unmarked Absent"
+    dialog.mark_unmarked_absent()
+    rows = {r["student_id"]: r for r in view.runtime.session(sid)["roster"]}
+    assert rows[first]["status"] == "PRESENT"
+    assert sorted(r["status"] for r in rows.values()) == ["ABSENT", "ABSENT", "PRESENT"]
+    assert all(r["reason"] for r in rows.values())  # every decision keeps an audited reason
+    assert reasons == ["Verified present in class", "Not present at headcount"]
+    assert dialog.report["unmarked"] == 0 and dialog.approve_button.isEnabled()  # headcount 1 == present 1
+    assert not dialog.all_absent_button.isEnabled()
+
+
 def test_attendance_screen_detects_period_without_manual_selection(window):
     _, view = window
     view.unlocked_ui()
